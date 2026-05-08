@@ -7,38 +7,21 @@ on:
 jobs:
   auto-comment:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
+    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     steps:
-      - name: Check labels and comment
-        uses: actions/github-script@v7
+      - uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issue = context.payload.issue;
-            const labels = issue.labels.map(label => label.name);
-            
-            // Check if issue has feedback or suggestion label
-            const targetLabels = ["feedback", "suggestion"];
-            const hasTargetLabel = labels.some(label => targetLabels.includes(label));
-            
-            if (hasTargetLabel && issue.state === "open") {
-              // Add comment
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                body: "Thank you for your contribution!"
-              });
-              
-              // Close the issue
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                state: "closed"
-              });
-              
-              console.log(`Commented on and closed issue #${issue.number}`);
-            } else {
-              console.log(`Issue #${issue.number} does not have target labels or is already closed`);
-            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: 'Thank you for your contribution!'
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });
