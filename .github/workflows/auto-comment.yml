@@ -1,11 +1,33 @@
-name: Disabled duplicate workflow
+name: Auto Comment and Close
 
 on:
-  workflow_dispatch:
+  issues:
+    types: [opened, labeled]
 
 jobs:
-  noop:
+  auto-comment:
     runs-on: ubuntu-latest
     steps:
-      - name: No-op
-        run: echo "Duplicate issue automation disabled to prevent repeated comments."
+      - name: Run script
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(l => l.name);
+            const actionRequired = labels.includes("feedback") || labels.includes("suggestion");
+            
+            if (actionRequired && issue.state === "open") {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: "Thank you for your contribution!"
+              });
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: "closed"
+              });
+            }
