@@ -2,14 +2,10 @@ name: Auto-comment and close issues
 
 on:
   issues:
-    types: [opened, labeled]
+    types: [opened]
 
 permissions:
   issues: write
-
-concurrency:
-  group: issue-${{ github.event.issue.number }}
-  cancel-in-progress: false
 
 jobs:
   auto-comment-and-close:
@@ -23,17 +19,10 @@ jobs:
             const repo = context.repo.repo;
             const issue_number = context.issue.number;
             const thankYouMessage = 'Thank you for your contribution!';
-
-            const { data: issue } = await github.rest.issues.get({
-              owner,
-              repo,
-              issue_number
-            });
-
-            const labels = issue.labels.map(label => typeof label === 'string' ? label : label.name);
+            const labels = context.payload.issue.labels.map(label => typeof label === 'string' ? label : label.name);
             const isMatch = labels.includes('feedback') || labels.includes('suggestion');
 
-            if (!isMatch || issue.state !== 'open') {
+            if (!isMatch) {
               return;
             }
 
