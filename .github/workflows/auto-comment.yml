@@ -1,10 +1,31 @@
-name: Legacy auto-comment workflow (disabled)
-
+name: Issue Automation
 on:
-  workflow_dispatch:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  issues: write
 
 jobs:
-  noop:
+  comment_and_close:
     runs-on: ubuntu-latest
+    if: >
+      contains(github.event.issue.labels.*.name, 'feedback') ||
+      contains(github.event.issue.labels.*.name, 'suggestion')
     steps:
-      - run: echo "This workflow is disabled. Use auto-comment-and-close.yml instead."
+      - name: Comment and close
+        uses: actions/github-script@v6
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: 'Thank you for your contribution!'
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });
