@@ -2,26 +2,28 @@ name: Auto Comment and Close
 
 on:
   issues:
-    types: [labeled, opened]
+    types: [opened, labeled]
 
 jobs:
-  auto-comment:
+  auto-close:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
-      - name: Comment and close issue
-        if: github.event.issue.state == 'open' && (contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion'))
+      - name: Comment and close
+        if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
         uses: actions/github-script@v6
         with:
           script: |
             await github.rest.issues.createComment({
+              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
               body: 'Thank you for your contribution!'
-            });
+            })
             await github.rest.issues.update({
+              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
               state: 'closed'
-            });
+            })
