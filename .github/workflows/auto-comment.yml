@@ -5,12 +5,10 @@ on:
     types: [opened, labeled]
 
 jobs:
-  auto-close:
+  auto_comment_close:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
     steps:
-      - name: Comment and close
+      - name: Check labels and act
         if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
         uses: actions/github-script@v6
         with:
@@ -20,10 +18,10 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: 'Thank you for your contribution!'
-            })
+            });
             await github.rest.issues.update({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'closed'
-            })
+            });
