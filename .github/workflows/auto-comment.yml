@@ -5,7 +5,7 @@ on:
     types: [opened, labeled]
 
 jobs:
-  comment-and-close:
+  auto-comment:
     runs-on: ubuntu-latest
     if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     steps:
