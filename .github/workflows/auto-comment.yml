@@ -1,10 +1,34 @@
-name: Auto Comment and Close (disabled)
+name: Auto Comment Bot
 
 on:
-  workflow_dispatch:
+  issues:
+    types: [opened, labeled]
 
 jobs:
-  noop:
+  auto-comment:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
-      - run: echo "Disabled in favor of auto-comment-and-close.yml"
+      - name: Add comment and close issue
+        if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = context.issue.number;
+            
+            // Add comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+              body: 'Thank you for your contribution!'
+            });
+            
+            // Close issue
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+              state: 'closed'
+            });
