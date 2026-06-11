@@ -1,4 +1,4 @@
-name: Auto Comment and Close
+name: Auto Comment Bot
 
 on:
   issues:
@@ -7,9 +7,11 @@ on:
 jobs:
   auto-comment:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     steps:
-      - name: Add thank you comment
+      - name: Add comment
         uses: actions/github-script@v7
         with:
           script: |
