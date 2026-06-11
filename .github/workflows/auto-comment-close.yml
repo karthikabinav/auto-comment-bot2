@@ -1,31 +1,11 @@
-name: Auto Comment and Close Issues
+name: Auto Comment and Close Issues (disabled)
 
 on:
-  issues:
-    types: [opened, labeled]
-
-permissions:
-  issues: write
+  workflow_dispatch:
 
 jobs:
-  comment-and-close:
-    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - name: Comment and close matching issue
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const issue = context.payload.issue;
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issue.number,
-              body: 'Thank you for your contribution!'
-            });
-            await github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issue.number,
-              state: 'closed'
-            });
+      - name: Disabled
+        run: echo "This legacy workflow is disabled. Use .github/workflows/auto-comment.yml."

@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  noop:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "This workflow is disabled. Use auto-comment-and-close.yml instead."
+      - name: Disabled
+        run: echo "This legacy workflow is disabled. Use .github/workflows/auto-comment.yml."
