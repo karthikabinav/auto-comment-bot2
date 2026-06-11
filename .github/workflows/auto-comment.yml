@@ -5,12 +5,12 @@ on:
     types: [labeled]
 
 jobs:
-  auto-comment:
+  auto-comment-and-close:
     runs-on: ubuntu-latest
-    if: contains(fromJSON('["feedback", "suggestion"]'), github.event.label.name)
+    if: contains(github.event.label.name, 'feedback') || contains(github.event.label.name, 'suggestion')
     steps:
       - name: Add comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v6
         with:
           script: |
             await github.rest.issues.createComment({
