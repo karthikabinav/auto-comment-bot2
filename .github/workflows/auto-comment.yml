@@ -4,21 +4,20 @@ on:
   issues:
     types: [opened, labeled]
 
-permissions:
-  issues: write
-
 jobs:
   auto-comment:
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
+    if: contains(github.event.issue.labels.*.name, feedback) || contains(github.event.issue.labels.*.name, suggestion)
+    permissions:
+      issues: write
     steps:
       - name: Add thank you comment
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.issue.number }}
-          body: "Thank you for your contribution!"
-      
+          body: Thank you for your contribution!
       - name: Close issue
         uses: peter-evans/close-issue@v3
         with:
           issue-number: ${{ github.event.issue.number }}
+          comment: Auto-closing issue with feedback/suggestion label
