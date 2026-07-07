@@ -1,26 +1,27 @@
-name: Auto comment on feedback or suggestion
+name: Auto Comment Bot
 on:
   issues:
-    types: [opened, labeled]
+    types: [labeled]
 jobs:
-  comment:
+  comment-and-close:
+    if: contains(feedback, suggestion, github.event.label.name)
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     steps:
       - uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issue_number = context.issue.number;
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issue_number,
-              body: 'Thank you for your contribution!'
-            });
-            await github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issue_number,
-              state: 'closed'
-            });
+            const label = context.payload.label.name;
+            if ([feedback, suggestion].includes(label)) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: Thank you for your contribution!
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                state: closed
+              });
+            }
