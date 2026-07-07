@@ -7,7 +7,7 @@ on:
 jobs:
   auto-comment:
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, feedback) || contains(github.event.issue.labels.*.name, suggestion)
+    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     permissions:
       issues: write
     steps:
