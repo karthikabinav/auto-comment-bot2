@@ -5,18 +5,30 @@ on:
     types: [opened, labeled]
 
 jobs:
-  auto-comment-and-close:
+  auto-comment:
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     permissions:
       issues: write
     steps:
-      - name: Add thank you comment
-        uses: peter-evans/create-or-update-comment@v4
+      - name: Comment and close issue if labeled feedback or suggestion
+        uses: actions/github-script@v7
         with:
-          issue-number: ${{ github.event.issue.number }}
-          body: Thank you for your contribution!
-      - name: Close issue
-        uses: peter-evans/close-issue@v3
-        with:
-          issue-number: ${{ github.event.issue.number }}
+          script: |
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(l => l.name);
+            const targetLabels = ["feedback", "suggestion"];
+            const hasTargetLabel = labels.some(l => targetLabels.includes(l));
+            if (hasTargetLabel) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: "Thank you for your contribution!"
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: "closed"
+              });
+            }
