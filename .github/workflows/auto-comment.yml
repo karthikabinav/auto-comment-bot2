@@ -1,4 +1,4 @@
-name: Auto Comment Bot
+name: .github/workflows/auto-comment.yml
 
 on:
   issues:
@@ -7,7 +7,7 @@ on:
 jobs:
   auto-comment-and-close:
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, feedback) || contains(github.event.issue.labels.*.name, suggestion)
+    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     permissions:
       issues: write
     steps:
@@ -22,11 +22,11 @@ jobs:
               owner,
               repo,
               issue_number,
-              body: Thank you for your contribution!
+              body: 'Thank you for your contribution!'
             });
             await github.rest.issues.update({
               owner,
               repo,
               issue_number,
-              state: closed
+              state: 'closed'
             });
