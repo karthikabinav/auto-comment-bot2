@@ -1,4 +1,4 @@
-name: .github/workflows/auto-comment.yml
+name: Auto Comment Bot
 
 on:
   issues:
