@@ -7,32 +7,27 @@ on:
 jobs:
   auto-comment-and-close:
     runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     permissions:
       issues: write
     steps:
-      - name: Add thank you comment and close issue if labeled feedback or suggestion
+      - name: Add thank you comment
         uses: actions/github-script@v7
         with:
           script: |
-            const issue = context.payload.issue;
-            const labels = issue.labels.map(l => l.name);
-            const targetLabels = ['feedback', 'suggestion'];
-            const hasTargetLabel = labels.some(label => targetLabels.includes(label));
-            
-            if (hasTargetLabel) {
-              console.log(`Issue #${issue.number} has target label, adding comment and closing.`);
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                body: 'Thank you for your contribution!'
-              });
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number,
-                state: 'closed'
-              });
-            } else {
-              console.log(`Issue #${issue.number} does not have target labels, skipping.`);
-            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: "Thank you for your contribution!"
+            });
+      - name: Close issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: "closed"
+            });
