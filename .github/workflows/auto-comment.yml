@@ -1,27 +1,34 @@
 name: Auto Comment Bot
+
 on:
   issues:
     types: [opened, labeled]
+
 jobs:
-  comment-and-close:
+  auto-comment:
     runs-on: ubuntu-latest
     permissions:
       issues: write
-    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     steps:
-      - name: Add comment and close issue
+      - name: Check labels and comment
         uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: 'Thank you for your contribution!'
-            });
-            await github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              state: 'closed'
-            });
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(l => l.name);
+            const targetLabels = ["feedback", "suggestion"];
+            const hasTargetLabel = labels.some(l => targetLabels.includes(l));
+            if (hasTargetLabel && issue.state === "open") {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: "Thank you for your contribution!"
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: "closed"
+              });
+            }
