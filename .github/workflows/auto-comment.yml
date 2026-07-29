@@ -5,6 +5,8 @@ on:
 jobs:
   comment-and-close:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     steps:
       - name: Add comment and close issue
