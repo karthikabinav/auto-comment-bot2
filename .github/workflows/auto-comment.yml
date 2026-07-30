@@ -7,9 +7,9 @@ on:
 jobs:
   auto-comment:
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     permissions:
       issues: write
+    if: contains(github.event.issue.labels.*.name, feedback) || contains(github.event.issue.labels.*.name, suggestion)
     steps:
       - name: Add thank you comment
         uses: peter-evans/create-or-update-comment@v4
@@ -20,4 +20,4 @@ jobs:
         uses: peter-evans/close-issue@v3
         with:
           issue-number: ${{ github.event.issue.number }}
-          comment: "Automatically closing this issue."
+          comment: "Auto-closing issue after thank you comment."
