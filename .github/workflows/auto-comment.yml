@@ -1,26 +1,29 @@
-name: Auto Comment Bot
+name: Auto Comment and Close
 on:
   issues:
-    types: [labeled]
+    types: [opened]
 jobs:
   auto-comment:
     runs-on: ubuntu-latest
-    if: github.event.label.name == 'feedback' || github.event.label.name == 'suggestion'
+    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     steps:
-      - name: Comment and close issue
-        uses: actions/github-script@v7
+      - name: Add comment
+        uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.rest.issues.createComment({
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
               body: 'Thank you for your contribution!'
-            });
-            await github.rest.issues.update({
+            })
+      - name: Close issue
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.update({
+              issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
               state: 'closed'
-            });
+            })
