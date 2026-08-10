@@ -2,34 +2,44 @@ name: Auto Comment Bot
 
 on:
   issues:
-    types: [opened, labeled, edited]
-
-permissions:
-  issues: write
-  contents: read
+    types: [opened, labeled]
 
 jobs:
   auto-comment:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
     steps:
-      - name: Add comment and close issue for feedback or suggestion
+      - name: Check issue labels
         uses: actions/github-script@v7
         with:
           script: |
             const issue = context.payload.issue;
-            if (!issue) return;
-            const labels = issue.labels.map(l => l.name);
-            if (labels.includes("feedback") || labels.includes("suggestion")) {
+            const labels = issue.labels.map(label => label.name.toLowerCase());
+            const triggerLabels = ["feedback", "suggestion"];
+            const shouldAct = labels.some(label => triggerLabels.includes(label));
+
+            if (shouldAct) {
+              console.log(`Issue #${issue.number} has matching label, adding comment and closing...`);
+              
+              // Add comment
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
                 body: "Thank you for your contribution!"
               });
+
+              // Close issue
               await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
                 state: "closed"
               });
+              
+              console.log(`Successfully commented and closed issue #${issue.number}`);
+            } else {
+              console.log(`Issue #${issue.number} does not have matching labels. Labels: ${labels.join(", ")}`);
             }
