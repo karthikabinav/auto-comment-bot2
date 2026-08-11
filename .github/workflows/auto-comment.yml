@@ -2,36 +2,37 @@ name: Auto Comment Bot
 
 on:
   issues:
-    types: [opened]
-
-permissions:
-  issues: write
-  contents: read
+    types: [opened, labeled]
 
 jobs:
   auto-comment:
     runs-on: ubuntu-latest
-    if: github.event.issue.state == "open"
+    permissions:
+      issues: write
     steps:
-      - name: Add comment and close for feedback/suggestion
+      - name: Comment and close feedback/suggestion issues
         uses: actions/github-script@v7
         with:
           script: |
-            const labels = context.payload.issue.labels.map(l => l.name);
-            const targetLabels = ["feedback", "suggestion"];
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(l => l.name);
             
-            if (labels.some(label => targetLabels.includes(label))) {
+            if (labels.includes("feedback") || labels.includes("suggestion")) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: issue.number,
                 body: "Thank you for your contribution!"
               });
               
               await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
+                issue_number: issue.number,
                 state: "closed"
               });
+              
+              console.log(`Commented and closed issue #${issue.number} with labels: ${labels.join(", ")}`);
+            } else {
+              console.log(`Issue #${issue.number} does not have feedback/suggestion labels. Skipping.`);
             }
