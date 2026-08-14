@@ -1,25 +1,35 @@
-name: Auto Comment and Close
+name: Auto Comment Bot
+
 on:
   issues:
     types: [opened, labeled]
+
 jobs:
-  auto-comment:
-    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
+  comment-and-close:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
-      - name: Comment and close issue
-        uses: actions/github-script@v6
+      - name: Add comment and close issue
+        uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: 'Thank you for your contribution!'
-            });
-            await github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              state: 'closed'
-            });
+            const labels = context.payload.issue.labels.map(l => l.name);
+            if (labels.includes("feedback") || labels.includes("suggestion")) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: "Thank you for your contribution!"
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                state: "closed"
+              });
+              console.log(`Commented and closed issue #${context.issue.number}`);
+            } else {
+              console.log(`Issue #${context.issue.number} does not have target labels`);
+            }
