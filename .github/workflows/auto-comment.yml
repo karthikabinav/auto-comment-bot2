@@ -5,15 +5,13 @@ on:
     types: [opened, labeled]
 
 jobs:
-  auto-comment:
-    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
+  comment-and-close:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
+    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     steps:
-      - name: Add thank you comment
-        uses: actions/github-script@v7
+      - uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             await github.rest.issues.createComment({
               owner: context.repo.owner,
@@ -21,10 +19,6 @@ jobs:
               issue_number: context.issue.number,
               body: 'Thank you for your contribution!'
             });
-      - name: Close issue
-        uses: actions/github-script@v7
-        with:
-          script: |
             await github.rest.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
