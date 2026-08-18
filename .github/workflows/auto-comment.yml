@@ -10,22 +10,22 @@ jobs:
     permissions:
       issues: write
     steps:
-      - name: Add comment and close issue for feedback or suggestion
+      - name: Comment and close feedback/suggestion issues
         uses: actions/github-script@v7
         with:
           script: |
             const labels = context.payload.issue.labels.map(l => l.name);
-            if (labels.includes('feedback') || labels.includes('suggestion')) {
+            if (labels.includes("feedback") || labels.includes("suggestion")) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: 'Thank you for your contribution!'
+                issue_number: context.payload.issue.number,
+                body: "Thank you for your contribution!"
               });
               await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.issue.number,
-                state: 'closed'
+                issue_number: context.payload.issue.number,
+                state: "closed"
               });
             }
