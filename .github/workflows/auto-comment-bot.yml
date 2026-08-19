@@ -1,13 +1,13 @@
 name: Auto Comment Bot
 on:
   issues:
-    types: [opened, reopened]
+    types: [opened, labeled]
 jobs:
   auto-comment-and-close:
     runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     steps:
-      - name: Check labels and comment
-        if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
+      - name: Add comment and close issue
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
