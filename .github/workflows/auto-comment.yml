@@ -1,11 +1,13 @@
-name: Auto Comment Bot
+name: Automated Comment Bot
+
 on:
   issues:
     types: [opened, labeled]
+
 jobs:
-  auto-comment:
-    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
+  comment-and-close:
     runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     permissions:
       issues: write
     steps:
