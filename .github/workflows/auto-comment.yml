@@ -7,7 +7,7 @@ on:
 jobs:
   auto-comment:
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, feedback) || contains(github.event.issue.labels.*.name, suggestion)
+    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     permissions:
       issues: write
     steps:
@@ -17,7 +17,7 @@ jobs:
           issue-number: ${{ github.event.issue.number }}
           body: Thank you for your contribution!
       - name: Close issue
-        uses: peter-evans/close-issue@v3
-        with:
-          issue-number: ${{ github.event.issue.number }}
-          comment: Auto-closing issue
+        run: |
+          gh issue close ${{ github.event.issue.number }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
