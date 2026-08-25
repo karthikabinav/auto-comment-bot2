@@ -2,7 +2,7 @@ name: Auto Comment Bot
 
 on:
   issues:
-    types: [opened, labeled]
+    types: [labeled, opened]
 
 jobs:
   auto-comment:
@@ -17,7 +17,7 @@ jobs:
           issue-number: ${{ github.event.issue.number }}
           body: Thank you for your contribution!
       - name: Close issue
-        run: |
-          gh issue close ${{ github.event.issue.number }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: peter-evans/close-issue@v3
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          comment: Thank you for your contribution!
