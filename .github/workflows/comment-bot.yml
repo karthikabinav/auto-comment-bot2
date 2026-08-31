@@ -1,31 +1,14 @@
-name: Auto Comment Bot
+name: Legacy issue automation (disabled)
 
 on:
-  issues:
-    types: [labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  comment-and-close:
+  disabled:
     runs-on: ubuntu-latest
-    if: github.event.label.name == feedback || github.event.label.name == suggestion
     steps:
-      - name: Add comment to issue
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: Thank you for your contribution!
-            })
-      - name: Close issue
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              state: closed
-            })
+      - name: Disabled
+        run: echo "This legacy workflow is disabled. Use .github/workflows/auto-comment.yml."

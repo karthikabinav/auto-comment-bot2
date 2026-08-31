@@ -1,18 +1,14 @@
-name: Thank You Bot
+name: Legacy issue automation (disabled)
+
 on:
-  issues:
-    types: [opened, labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
 jobs:
-  auto-comment:
+  disabled:
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, feedback) || contains(github.event.issue.labels.*.name, suggestion)
     steps:
-      - name: Add comment
-        uses: peter-evans/create-or-update-comment@v3
-        with:
-          issue-number: ${{ github.event.issue.number }}
-          body: Thank you for your contribution!
-      - name: Close issue
-        run: gh issue close ${{ github.event.issue.number }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Disabled
+        run: echo "This legacy workflow is disabled. Use .github/workflows/auto-comment.yml."
