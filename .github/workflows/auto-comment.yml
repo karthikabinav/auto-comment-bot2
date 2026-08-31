@@ -2,10 +2,11 @@ name: Auto Comment Bot
 on:
   issues:
     types: [opened, labeled]
-_jobs_placeholder: true
 jobs:
   auto-comment:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
       - name: Add thank you comment and close for feedback/suggestion
         uses: actions/github-script@v7
