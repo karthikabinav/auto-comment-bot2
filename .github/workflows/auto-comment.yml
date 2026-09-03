@@ -1,53 +1,28 @@
 name: Auto Comment Bot
-
 on:
   issues:
     types: [opened, labeled]
 
-permissions:
-  contents: read
-  issues: write
-
-concurrency:
-  group: auto-comment-${{ github.event.issue.number }}
-  cancel-in-progress: false
-
 jobs:
   auto-comment:
-    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
+    permissions:
+      issues: write
     steps:
-      - name: Add thank you comment and close issue
+      - name: Add thank you comment
         uses: actions/github-script@v7
         with:
           script: |
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
-            const body = 'Thank you for your contribution!';
-
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              { owner, repo, issue_number, per_page: 100 }
-            );
-
-            const alreadyCommented = comments.some(
-              (comment) =>
-                comment.user?.login === 'github-actions[bot]' &&
-                comment.body === body
-            );
-
-            if (!alreadyCommented) {
-              await github.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number,
-                body
-              });
-            }
-
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: 'Thank you for your contribution!'
+            });
             await github.rest.issues.update({
-              owner,
-              repo,
-              issue_number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
               state: 'closed'
             });
