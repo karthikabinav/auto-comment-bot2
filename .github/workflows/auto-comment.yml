@@ -9,20 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
     steps:
-      - name: Comment on issue
+      - name: Comment and close issue
         uses: actions/github-script@v6
         with:
           script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: 'Thank you for your contribution!'
-            });
-            github.rest.issues.close({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'closed'
-            });
-  
+            github.rest.issues.createComment({issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, body: 'Thank you for your contribution!'});
+            github.rest.issues.update({issue_number: context.issue.number, owner: context.repo.owner, repo: context.repo.repo, state: 'closed'});
