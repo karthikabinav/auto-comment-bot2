@@ -1,20 +1,15 @@
 """
-Automated Comment Bot
-Triggers on new issues labeled 'feedback' or 'suggestion'
-Adds comment 'Thank you for your contribution!' and closes issue
+GitHub Automation Script
+Automatically adds comment Thank you for your contribution! to issues labeled feedback or suggestion, then closes them.
 """
-import sys
 
-def process_issue(labels, issue_number):
-    if any(label in ['feedback', 'suggestion'] for label in labels):
-        print(f"Issue #{issue_number}: Adding comment 'Thank you for your contribution!'")
-        print(f"Issue #{issue_number}: Closing issue")
+TARGET_LABELS = {"feedback", "suggestion"}
+COMMENT_BODY = "Thank you for your contribution!"
+
+def handle_issue(issue):
+    labels = {label.name for label in issue.labels}
+    if labels & TARGET_LABELS:
+        issue.create_comment(COMMENT_BODY)
+        issue.edit(state="closed")
         return True
-    else:
-        print(f"Issue #{issue_number}: Label not in target list, skipping")
-        return False
-
-if __name__ == "__main__":
-    process_issue(["feedback"], 1)
-    process_issue(["suggestion"], 2)
-    process_issue(["bug"], 3)
+    return False
