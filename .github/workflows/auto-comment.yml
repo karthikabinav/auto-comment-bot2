@@ -4,26 +4,45 @@ on:
   issues:
     types: [opened, labeled]
 
+permissions:
+  issues: write
+
+concurrency:
+  group: auto-comment-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   auto_comment_close:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: Check label and act
-        uses: actions/github-script@v6
+      - name: Thank and close feedback or suggestion issues
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
-            const labels = context.payload.issue.labels.map(l => l.name);
-            if (labels.includes('feedback') || labels.includes('suggestion')) {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: 'Thank you for your contribution!'
-              });
-              await github.rest.issues.update({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'closed'
-              });
+            const params = {
+              ...context.repo,
+              issue_number: context.issue.number
+            };
+            // Read the current state because opened and labeled events can overlap.
+            const { data: issue } = await github.rest.issues.get(params);
+            if (issue.pull_request || issue.state !== "open") return;
+
+            const labels = issue.labels.map(label =>
+              typeof label === "string" ? label : label.name
+            );
+            if (!labels.some(name => ["feedback", "suggestion"].includes(name))) return;
+
+            const body = "Thank you for your contribution!";
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...params,
+              per_page: 100
+            });
+            // Make retries safe if commenting succeeded but closing failed.
+            const alreadyThanked = comments.some(comment =>
+              comment.user?.login === "github-actions[bot]" && comment.body === body
+            );
+            if (!alreadyThanked) {
+              await github.rest.issues.createComment({ ...params, body });
             }
+            await github.rest.issues.update({ ...params, state: "closed" });
