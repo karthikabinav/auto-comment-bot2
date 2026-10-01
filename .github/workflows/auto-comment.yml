@@ -4,19 +4,26 @@ on:
   issues:
     types: [opened, labeled]
 
-permissions:
-  issues: write
-
 jobs:
-  comment_and_close:
+  auto_comment_close:
     runs-on: ubuntu-latest
     steps:
-      - name: Check labels, comment and close
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          LABELS=$(jq -r ".issue.labels[].name" "$GITHUB_EVENT_PATH")
-          if echo "$LABELS" | grep -E -q "^(feedback|suggestion)$"; then
-            gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} -b "Thank you for your contribution!"
-            gh issue close ${{ github.event.issue.number }} --repo ${{ github.repository }}
-          fi
+      - name: Check label and act
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const labels = context.payload.issue.labels.map(l => l.name);
+            if (labels.includes('feedback') || labels.includes('suggestion')) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: 'Thank you for your contribution!'
+              });
+              await github.rest.issues.update({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'closed'
+              });
+            }
