@@ -1,31 +1,56 @@
 name: Auto Comment Bot
 
-on:
+"on":
   issues:
     types: [opened, labeled]
 
+permissions:
+  issues: write
+
+concurrency:
+  group: auto-comment-bot2-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   comment-and-close:
+    if: >-
+      github.event.issue.state == 'open' &&
+      (contains(github.event.issue.labels.*.name, 'feedback') ||
+       contains(github.event.issue.labels.*.name, 'suggestion'))
     runs-on: ubuntu-latest
-    if: contains(join(github.event.issue.labels.*.name, ","), "feedback") || contains(join(github.event.issue.labels.*.name, ","), "suggestion")
+    timeout-minutes: 5
     steps:
-      - name: Add comment
-        uses: actions/github-script@v7
+      - name: Thank the contributor and close the issue
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: "Thank you for your contribution!"
-            });
-      - name: Close issue
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              state: "closed"
+            const issueParams = {
+              ...context.repo,
+              issue_number: context.issue.number
+            };
+            const { data: issue } = await github.rest.issues.get(issueParams);
+            const eligible = issue.labels.some(label =>
+              ['feedback', 'suggestion'].includes(
+                typeof label === 'string' ? label : label.name
+              )
+            );
+            if (issue.state !== 'open' || !eligible) return;
+
+            const message = 'Thank you for your contribution!';
+            const comments = await github.paginate(
+              github.rest.issues.listComments, issueParams
+            );
+            const alreadyThanked = comments.some(comment =>
+              comment.body === message &&
+              comment.user?.login === 'github-actions[bot]'
+            );
+            if (!alreadyThanked) {
+              await github.rest.issues.createComment({
+                ...issueParams,
+                body: message
+              });
+            }
+            await github.rest.issues.update({
+              ...issueParams,
+              state: 'closed'
             });
