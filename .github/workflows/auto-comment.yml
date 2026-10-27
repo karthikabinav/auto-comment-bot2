@@ -1,26 +1,48 @@
 name: Auto Comment Bot
+
 on:
   issues:
     types: [opened, labeled]
+
+permissions:
+  issues: write
+
+concurrency:
+  group: auto-comment-${{ github.repository }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   auto-comment:
-    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
+    if: >-
+      github.event.issue.state == 'open' &&
+      (contains(github.event.issue.labels.*.name, 'feedback') ||
+       contains(github.event.issue.labels.*.name, 'suggestion'))
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
     steps:
-      - uses: actions/github-script@v7
+      - name: Comment once and close matching issue
+        uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.issues.createComment({
+            const params = {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: 'Thank you for your contribution!'
+              issue_number: context.issue.number
+            };
+            const { data: issue } = await github.rest.issues.get(params);
+            const matches = issue.labels.some(label =>
+              ['feedback', 'suggestion'].includes(typeof label === 'string' ? label : label.name)
+            );
+            if (issue.state !== 'open' || !matches) return;
+
+            const body = 'Thank you for your contribution!';
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              ...params,
+              per_page: 100
             });
-            await github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              state: 'closed'
-            });
+            const alreadyCommented = comments.some(comment =>
+              comment.user?.login === 'github-actions[bot]' && comment.body === body
+            );
+            if (!alreadyCommented) {
+              await github.rest.issues.createComment({ ...params, body });
+            }
+            await github.rest.issues.update({ ...params, state: 'closed' });
