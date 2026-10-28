@@ -7,24 +7,48 @@ on:
 permissions:
   issues: write
 
+# Creating an issue that already carries labels fires BOTH an "opened" and a
+# "labeled" event. Serialize runs per issue so they cannot race each other;
+# together with the checks in the script this guarantees a single comment.
+concurrency:
+  group: auto-comment-close-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   auto-comment-close:
-    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion')
+    if: >-
+      github.event.issue.state == 'open' && (
+      (github.event.action == 'opened' && (contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'suggestion'))) ||
+      (github.event.action == 'labeled' && (github.event.label.name == 'feedback' || github.event.label.name == 'suggestion'))
+      )
     runs-on: ubuntu-latest
     steps:
-      - name: Add thank-you comment
+      - name: Thank the author and close the issue
         uses: actions/github-script@v7
         with:
           script: |
-            await github.rest.issues.createComment({
+            const body = 'Thank you for your contribution!';
+            const targetLabels = ['feedback', 'suggestion'];
+            const params = {
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: 'Thank you for your contribution!'
-            });
-            await github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              state: 'closed'
-            });
+            };
+
+            // Re-read the issue: another run for the same issue may already have handled it.
+            const { data: issue } = await github.rest.issues.get(params);
+            const labels = issue.labels.map(l => (typeof l === 'string' ? l : l.name));
+            if (issue.state !== 'open' || !labels.some(l => targetLabels.includes(l))) {
+              core.info(`Issue #${params.issue_number} is already closed or not labeled feedback/suggestion; nothing to do.`);
+              return;
+            }
+
+            // Post the thank-you comment only once.
+            const comments = await github.paginate(github.rest.issues.listComments, { ...params, per_page: 100 });
+            if (!comments.some(c => (c.body || '').trim() === body)) {
+              await github.rest.issues.createComment({ ...params, body });
+              core.info(`Commented on issue #${params.issue_number}.`);
+            }
+
+            await github.rest.issues.update({ ...params, state: 'closed', state_reason: 'completed' });
+            core.info(`Closed issue #${params.issue_number}.`);
